@@ -1,0 +1,13 @@
+{
+  "name": "http-live-upload-server",
+  "description": "Simple HTTP upload and serve server to use with DASH/HLS in node.js",
+  "author": "maxlovic",
+  "version": "0.0.1",
+  "main": "serer.js",
+  "dependencies": {
+    "express": "4.0.x",
+    "http-status-codes": "1.3.0",
+    "fs-extra": "6.0.1"
+  },
+  "engine": "node >= 0.10.0"
+}
