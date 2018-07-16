@@ -60,7 +60,8 @@ class HTTPLiveUploadServer {
             fse.outputFile(filename, body)
             .then(() => fse.ensureFile(filename))
             .then(() => {
-                console.log('PUT ' + filename + ' succeeded!');
+                const stats = fse.statSync(filename);
+                console.log('PUT ' + filename + ' (' + stats.size + ' bytes) succeeded!');
                 response.status(HTTP_STATUS.OK).send('OK');
             })
             .catch(err => {
