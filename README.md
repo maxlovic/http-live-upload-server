@@ -5,6 +5,7 @@ A simple HTTP upload and serve server to use with DASH/HLS encoder.
 
 # Todo 
 - [ ] Add GET handler
+- [ ] Printout real IP address
 - [ ] Add GET file list as HTML page
 - [ ] Add command line interface
 - [ ] Add an option to specify server port

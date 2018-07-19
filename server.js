@@ -4,6 +4,8 @@ const fse = require('fs-extra');
 var bodyParser = require('body-parser');
 const path = require("path");
 const extend = require('node.extend');
+const ip = require("ip");
+const cors = require('cors')
 const util = require('util');
 var HTTP_STATUS = require('http-status-codes');
 
@@ -11,6 +13,7 @@ var HTTP_STATUS = require('http-status-codes');
 const defaults = {
     upload_url: '/upload',
     directory: './',
+    allow_cors: true,
     overwrite: true
 };
 
@@ -27,9 +30,16 @@ class HTTPLiveUploadServer {
 
 
     attach(app) {
+        const self = this;
+        //const staticMiddleware = express.static('./');
+        //app.get('./*', staticMiddleware);
 
-        const staticMiddleware = express.static('./');
-        app.get('./*', staticMiddleware);
+        if (self.options.allow_cors)
+            app.use(cors());
+
+        app.disable('etag');
+        app.disable('view cache');
+        app.use(express.static('hls', {maxAge: 10}));
 
         //app.get('/', function (req, res) {
         //    console.log("GET");
@@ -48,31 +58,28 @@ class HTTPLiveUploadServer {
             const filename = path.normalize('./' + req.path);
 
             let body = [];
-            req.on('error', (err) => {
-                console.error(err);
-            }).on('data', (chunk) => {
-                body.push(chunk);
-            }).on('end', () => {
-                body = Buffer.concat(body)
+            req.on('error', (err) => { console.error(err); })
+            .on('data', (chunk) => { body.push(chunk); })
+            .on('end', () => {
+                body = Buffer.concat(body);
+
+                fse.outputFile(filename, body)
+                .then(() => fse.ensureFile(filename))
+                .then(() => {
+                    const stats = fse.statSync(filename);
+                    console.log('PUT ' + filename + ' (' + stats.size + ' bytes) succeeded!');
+                    response.status(HTTP_STATUS.OK).send('OK');
+                })
+                .catch(err => {
+                    console.log('PUT ' + filename + ' ' + err);
+                    response.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(err);
+                })
             });
-            
-            //console.log(util.inspect(req));
-            fse.outputFile(filename, body)
-            .then(() => fse.ensureFile(filename))
-            .then(() => {
-                const stats = fse.statSync(filename);
-                console.log('PUT ' + filename + ' (' + stats.size + ' bytes) succeeded!');
-                response.status(HTTP_STATUS.OK).send('OK');
-            })
-            .catch(err => {
-                console.log('PUT ' + filename + ' ' + err);
-                response.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(err);
-            })
         });
 
         // Change the 404 message modifing the middleware
         app.use(function(req, res, next) {
-            console.log("404" + req);
+            console.log("ERROR 404: " + req.path);
             res.status(404).send("Sorry, that route doesn't exist. Have a nice day :)");
         });
 
@@ -83,7 +90,7 @@ class HTTPLiveUploadServer {
         const self = this;
         const opts = extend( {}, listen_defaults, options );
         const app = express();
-        self.attach(app).listen(opts.port, () => { console.log('Listening on port ' + opts.port); });
+        self.attach(app).listen(opts.port, () => { console.log('Listening on ' + ip.address() + ':' + opts.port); });
         return self;
     }
 
