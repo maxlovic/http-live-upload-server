@@ -1,13 +1,13 @@
 // Require express and create an instance of it
-var express = require('express');
+const express = require('express');
 const fse = require('fs-extra');
-var bodyParser = require('body-parser');
+const serve_index = require('serve-index');
 const path = require("path");
 const extend = require('node.extend');
 const ip = require("ip");
 const cors = require('cors')
 const util = require('util');
-var HTTP_STATUS = require('http-status-codes');
+const HTTP_STATUS = require('http-status-codes');
 
 
 const defaults = {
@@ -39,7 +39,7 @@ class HTTPLiveUploadServer {
 
         app.disable('etag');
         app.disable('view cache');
-        app.use(express.static('hls', {maxAge: 10}));
+        app.use(express.static('hls', {maxAge: 10}), serve_index('hls'));
 
         //app.get('/', function (req, res) {
         //    console.log("GET");
